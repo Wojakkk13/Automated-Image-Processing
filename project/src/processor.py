@@ -583,35 +583,33 @@ def mediapipe_face_blur(
 
 
 
-def save_image(output_dir: Path, original_path: Path, image: np.ndarray, filter_name: str) -> Optional[Path]:
+def save_image(output_dir: Path, original_path: Path, image: np.ndarray, filter_name: str) -> Path:
+    """
+    Save processed image directly into `output_dir` with suffix for the filter.
+    """
     output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)  # only create the folder, no subfolders
     ext = original_path.suffix.lower() or ".jpg"
     out_name = f"{original_path.stem}_{filter_name}{ext}"
     out_path = output_dir / out_name
-    try:
-        success, encoded = cv2.imencode(ext, image)
-        if not success:
-            success, encoded = cv2.imencode('.jpg', image)
-            if not success:
-                print(f"[save] Failed to encode image for {out_path}")
-                return None
-            out_path = out_path.with_suffix('.jpg')
-        encoded.tofile(str(out_path))
-        print(f"[save] Wrote: {out_path}")
-        return out_path
-    except Exception as e:
-        print(f"[save] Exception saving {out_path}: {e}")
-        return None
+
+    success, encoded = cv2.imencode(ext, image)
+    if not success:
+        success, encoded = cv2.imencode(".jpg", image)
+        out_path = out_path.with_suffix(".jpg")
+
+    encoded.tofile(str(out_path))
+    print(f"[save] Wrote: {out_path}")
+    return out_path
 
 
 def process_all(input_dir: Path, output_dir: Path) -> None:
-    """Scan `input_dir`, apply filters to each image, and save results to `output_dir`.
-
-    Current filters: morphological gradient, mirror, symmetry.
+    """
+    Scan `input_dir`, apply filters to each image, and save results to `output_dir` directly.
     """
     input_dir = Path(input_dir)
     output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     images = scan_images(input_dir)
     if not images:
@@ -625,55 +623,47 @@ def process_all(input_dir: Path, output_dir: Path) -> None:
             print(f"[process] Skipping unreadable image: {img_path.name}")
             continue
 
-        # Morphological gradient (default kernel 3)
+        # Example filters – all saved directly to output_dir
         try:
             grad = morphological_gradient(img, kernel_size=3)
             save_image(output_dir, img_path, grad, "morph_gradient_k3")
         except Exception as e:
-            print(f"[process] Morphological gradient failed for {img_path}: {e}")
+            print(f"[process] Morphological gradient failed: {e}")
 
-        # Mirror horizontally and save
         try:
             mirrored = mirror_horizontal(img)
             save_image(output_dir, img_path, mirrored, "mirror_h")
         except Exception as e:
-            print(f"[process] Mirror horizontal failed for {img_path}: {e}")
+            print(f"[process] Mirror horizontal failed: {e}")
 
-        # Half-image mirroring (left -> right)
         try:
-            half = half_mirror(img, side="left")
-            save_image(output_dir, img_path, half, "mirror_half_lr")
+            half_lr = half_mirror(img, side="left")
+            save_image(output_dir, img_path, half_lr, "mirror_half_lr")
         except Exception as e:
-            print(f"[process] Half-image mirroring failed for {img_path}: {e}")
-        # Half-image mirroring (right -> left)
+            print(f"[process] Half mirror LR failed: {e}")
+
         try:
             half_rl = half_mirror(img, side="right")
             save_image(output_dir, img_path, half_rl, "mirror_half_rl")
         except Exception as e:
-            print(f"[process] Half-image mirroring (rl) failed for {img_path}: {e}")
+            print(f"[process] Half mirror RL failed: {e}")
 
-
-
-        # Unsharp Masking
         try:
-            us = unsharp_mask(img, amount=1.0, radius=1.0, threshold=0)
-            save_image(output_dir, img_path, us, "unsharp_a100_r10")
+            us = unsharp_mask(img)
+            save_image(output_dir, img_path, us, "unsharp")
         except Exception as e:
-            print(f"[process] Unsharp masking failed for {img_path}: {e}")
+            print(f"[process] Unsharp mask failed: {e}")
 
-        # Thermal heat map
         try:
-            heat = thermal_map(img, colormap="jet", clip_percentiles=(2, 98), overlay=False)
-            save_image(output_dir, img_path, heat, "thermal_jet")
+            heat = thermal_map(img)
+            save_image(output_dir, img_path, heat, "thermal")
         except Exception as e:
-            print(f"[process] Thermal mapping failed for {img_path}: {e}")
+            print(f"[process] Thermal map failed: {e}")
 
-        # MediaPipe segmentation + face blur (falls back to Haar if mediapipe missing)
         try:
-            mpb = mediapipe_face_blur(img, blur_factor=1.0, seg_threshold=0.5)
+            mpb = mediapipe_face_blur(img)
             save_image(output_dir, img_path, mpb, "mp_faceblur")
         except Exception as e:
-            print(f"[process] Mediapipe face blur failed for {img_path}: {e}")
+            print(f"[process] MediaPipe face blur failed: {e}")
 
     print(f"[process] Completed processing {len(images)} image(s). Outputs in {output_dir}")
-    
