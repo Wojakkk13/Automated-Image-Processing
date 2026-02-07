@@ -12,25 +12,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # 1️⃣ Checkout the repo
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    # 2️⃣ Setup Python
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.x'
 
-    # 3️⃣ Install dependencies
     - name: Install dependencies
-      run: pip install -r requirements.txt
+      run: |
+        pip install -r requirements.txt
+        pip install pytest
 
-    # 4️⃣ Run the image processing script
     - name: Run Image Processing
       run: python project/src/main.py
 
-    # 5️⃣ Run tests to validate outputs
     - name: Run PyTest Validation
       run: pytest test_output.py
 
