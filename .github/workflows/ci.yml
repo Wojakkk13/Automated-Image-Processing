@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout repository
+      # 1️⃣ Checkout code
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -21,39 +21,32 @@ jobs:
         with:
           python-version: 3.11
 
-      # 3️⃣ Install dependencies directly
+      # 3️⃣ Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install numpy opencv-python mediapipe pytest
+          pip install -r requirements.txt
+          pip install pytest mediapipe opencv-python
 
-      # 4️⃣ Debug: list input folder contents
+      # 4️⃣ Debug: list input folder
       - name: Show input folder
         run: ls -R input || echo "No input folder or files found"
 
-      # 5️⃣ Ensure there is at least one image to process
-      - name: Create sample image if input is empty
-        run: |
-          if [ -z "$(ls -A input 2>/dev/null)" ]; then
-            mkdir -p input
-            python -c "from PIL import Image; img = Image.new('RGB', (128,128), (255,0,0)); img.save('input/sample.jpg')"
-          fi
-
-      # 6️⃣ Run image processing
+      # 5️⃣ Run image processing
       - name: Run image processing
-        working-directory: project
-        run: python -m src.main
+        run: python -m project.src.main
+        working-directory: ${{ github.workspace }}
 
-      # 7️⃣ Debug: list output folder contents
+      # 6️⃣ Debug: list output folder
       - name: Show output folder
         run: ls -R output || echo "No output generated"
 
-      # 8️⃣ Run tests
+      # 7️⃣ Run tests
       - name: Run tests
-        working-directory: project
         run: pytest -v test_output.py || true
+        working-directory: ${{ github.workspace }}
 
-      # 9️⃣ Upload processed images
+      # 8️⃣ Upload processed images as artifacts
       - name: Upload processed images
         uses: actions/upload-artifact@v4
         with:
