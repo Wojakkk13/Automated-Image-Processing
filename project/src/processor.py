@@ -14,6 +14,7 @@ import numpy as np
 SUPPORTED_EXT = {".jpg", ".jpeg", ".png", ".bmp"}
 
 
+
 def scan_images(input_dir: Path) -> List[Path]:
     input_dir = Path(input_dir)
     if not input_dir.exists():
@@ -675,3 +676,4 @@ def process_all(input_dir: Path, output_dir: Path) -> None:
             print(f"[process] Mediapipe face blur failed for {img_path}: {e}")
 
     print(f"[process] Completed processing {len(images)} image(s). Outputs in {output_dir}")
+    
