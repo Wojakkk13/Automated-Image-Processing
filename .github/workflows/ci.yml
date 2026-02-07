@@ -33,7 +33,8 @@ jobs:
 
       # 5️⃣ Run image processing
       - name: Run image processing
-        run: python -m src.main
+        run: python project/src/main.py
+
 
       # 6️⃣ Debug: list output folder contents
       - name: Show output folder
