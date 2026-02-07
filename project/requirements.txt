@@ -1,0 +1,8 @@
+# Minimal requirements to run the image processor locally
+# Install with: pip install -r requirements.txt
+
+numpy
+opencv-python
+
+# Optional (improves face detection/blur). Install only if you want MP features:
+# mediapipe
