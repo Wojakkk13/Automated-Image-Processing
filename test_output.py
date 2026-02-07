@@ -1,21 +1,19 @@
 from pathlib import Path
+import pytest
 
-# Define the output folder relative to this test file
-output_dir = Path(__file__).resolve().parents[0] / "output"
+# Change this if your output folder is different
+output_dir = Path(__file__).parent / "output"
 
 def test_images_processed():
     """
-    Verify that at least one processed image exists in output or its subfolders.
-    Works with images in timestamped subfolders like output/run_YYYYMMDD_HHMMSS.
+    Verify that at least one processed image exists in output folder.
+    Works when images are saved directly into output/ (no subfolders).
     """
-    # recursively find all images
-    files = list(output_dir.rglob("*.jpg")) + \
-            list(output_dir.rglob("*.jpeg")) + \
-            list(output_dir.rglob("*.png"))
+    # Only look directly in output/
+    files = [p for p in output_dir.iterdir() if p.is_file() and p.suffix.lower() in {".jpg", ".jpeg", ".png"}]
 
-    # Debug info
     print(f"[test] Looking in: {output_dir}")
     print(f"[test] Found {len(files)} image(s): {[f.name for f in files]}")
 
-    # Check that we have at least one image
+    # Must have at least one processed image
     assert len(files) > 0, f"No processed images found in {output_dir}! Make sure main.py ran correctly."
