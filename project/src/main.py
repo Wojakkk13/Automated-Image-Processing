@@ -1,5 +1,4 @@
 from pathlib import Path
-from datetime import datetime
 import sys
 
 try:
@@ -13,16 +12,15 @@ def main() -> None:
     # Repo root
     script_dir = Path(__file__).resolve().parent.parent
     input_dir = script_dir / "input"
-    output_base = script_dir / "output"
+    output_dir = script_dir / "output"
 
-    # Create timestamped folder
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_dir = output_base / f"run_{timestamp}"
+    # Ensure output folder exists
     output_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"[main] Input directory: {input_dir}")
     print(f"[main] Output directory: {output_dir}")
 
+    # Process all images into output/ directly
     processor.process_all(input_dir, output_dir)
 
 if __name__ == "__main__":
