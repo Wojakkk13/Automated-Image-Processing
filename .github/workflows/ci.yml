@@ -1,5 +1,8 @@
 name: Automated Image Processing CI
 
+permissions:
+  contents: write
+
 on:
   push:
     branches:
