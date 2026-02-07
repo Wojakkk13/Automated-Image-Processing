@@ -1,0 +1,82 @@
+name: Automated Image Processing CI
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout repo
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Setup Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      # Install dependencies (opencv + numpy are required)
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install numpy opencv-python pytest
+
+      # Show input folder
+      - name: Listing input folder
+        run: ls -R input || echo "No input folder"
+
+      # Stop if input is empty
+      - name: Ensure input not empty
+        run: |
+          if [ -z "$(ls -A input 2>/dev/null)" ]; then
+            echo "No images in input folder — exiting."
+            exit 0
+          fi
+
+      # Run your processor
+      - name: Run image processing
+        run: python -m project.src.main
+
+      # Show output
+      - name: Listing output folder
+        run: ls -R output || echo "No output generated"
+
+      # Run test if exists
+      - name: Run pytest
+        run: |
+          if [ -f test_output.py ]; then
+            pytest -v test_output.py
+          else
+            echo "test_output.py not found, skipping tests"
+          fi
+
+      # Commit generated images back to repo
+      - name: Commit processed images
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+
+          git add output/
+
+          if git diff --cached --quiet; then
+            echo "No new output to commit"
+          else
+            git commit -m "Auto-generate processed images"
+            git push
+          fi
+
+      # Upload artifact (backup)
+      - name: Upload processed images
+        uses: actions/upload-artifact@v4
+        with:
+          name: processed-images
+          path: output/*
