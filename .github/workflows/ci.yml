@@ -11,40 +11,33 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout your code
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Set up Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: 3.11
 
-      # 3️⃣ Install dependencies including pytest
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest opencv-python-headless numpy
+          pip install -r project/requirements.txt
+          pip install pytest
 
-      # 4️⃣ Debug: list input folder contents
       - name: Show input folder
         run: ls -R input
 
-      # 5️⃣ Run image processing
       - name: Run image processing
+        working-directory: project
         run: python -m src.main
 
-      # 6️⃣ Debug: list output folder contents
       - name: Show output folder
         run: ls -R output
 
-      # 7️⃣ Run tests
       - name: Run tests
         run: pytest -v test_output.py
 
-      # 8️⃣ Upload processed images as artifacts
       - name: Upload processed images
         uses: actions/upload-artifact@v4
         with:
