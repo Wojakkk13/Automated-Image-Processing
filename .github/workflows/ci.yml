@@ -1,0 +1,40 @@
+name: Automated Image Processing CI
+
+# Trigger workflow on push to these branches
+on:
+  push:
+    branches:
+      - main
+      - feature/initial
+      - feature/image-processing
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Checkout the repo
+    - uses: actions/checkout@v3
+
+    # Step 2: Setup Python
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    # Step 3: Install dependencies
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    # Step 4: Run image processing script
+    - name: Run Image Processing
+      run: python project/process_images.py
+
+    # Step 5: Run tests (check output folder exists)
+    - name: Check output folder
+      run: |
+        if [ -d "output" ]; then
+          echo "Output folder exists"
+        else
+          echo "Output folder missing" && exit 1
+        fi
