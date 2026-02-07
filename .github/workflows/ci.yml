@@ -7,44 +7,50 @@ on:
       - feature/*
 
 jobs:
-  build:
+  process-images:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout code
+      # 1️⃣ Checkout the repo
       - name: Checkout repository
         uses: actions/checkout@v4
 
       # 2️⃣ Set up Python
-      - name: Set up Python
+      - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
           python-version: 3.11
 
-      # 3️⃣ Install dependencies
+      # 3️⃣ Install dependencies directly
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest mediapipe opencv-python
+          pip install numpy opencv-python mediapipe pytest
 
-      # 4️⃣ Debug: list input folder
+      # 4️⃣ Debug: list input folder contents
       - name: Show input folder
-        run: ls -R input || echo "No input folder or files found"
+        run: |
+          echo "Listing input folder:"
+          ls -R input || echo "No input folder or files found"
 
       # 5️⃣ Run image processing
       - name: Run image processing
-        run: python -m project.src.main
-        working-directory: ${{ github.workspace }}
+        run: python -m src.main
 
-      # 6️⃣ Debug: list output folder
+      # 6️⃣ Debug: list output folder contents
       - name: Show output folder
-        run: ls -R output || echo "No output generated"
+        run: |
+          echo "Listing output folder:"
+          ls -R output || echo "No output generated"
 
-      # 7️⃣ Run tests
+      # 7️⃣ Run tests if test_output.py exists
       - name: Run tests
-        run: pytest -v test_output.py || true
-        working-directory: ${{ github.workspace }}
+        run: |
+          if [ -f test_output.py ]; then
+            pytest -v test_output.py
+          else
+            echo "No test_output.py found; skipping tests"
+          fi
 
       # 8️⃣ Upload processed images as artifacts
       - name: Upload processed images
