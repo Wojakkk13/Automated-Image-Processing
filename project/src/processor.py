@@ -345,8 +345,16 @@ def detect_faces(img: np.ndarray, min_size=(8, 8)) -> List[tuple]:
         contours, _ = cv2.findContours(skin_mask_u8, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         for c in contours:
             x, y, ww, hh = cv2.boundingRect(c)
-            if ww >= min_size[0] and hh >= min_size[1] and ww * hh < (w * h * 0.5):
-                candidates.append((x, y, ww, hh))
+            area = int(ww) * int(hh)
+            area_frac = float(area) / float(w * h) if (w * h) > 0 else 0.0
+            # Reject tiny regions or overly large regions (likely false positives).
+            if ww < min_size[0] or hh < min_size[1]:
+                continue
+            # Skip very large skin-like regions (e.g. covering much of the image)
+            if area_frac > 0.12:
+                print(f"[detect] Skipping large skin candidate (area_frac={area_frac:.2f})")
+                continue
+            candidates.append((x, y, ww, hh))
     except Exception:
         pass
 
@@ -586,7 +594,8 @@ def mediapipe_face_blur(
             else:
                 combined = cv2.bitwise_and(ellipse_mask, roi_mask.astype(np.uint8))
                 # If combined mask is too small, fall back to ellipse with slight dilation
-                if float(combined.mean()) / 255.0 < 0.02:
+                frac = float(combined.mean()) / 255.0
+                if frac < 0.02:
                     dk = max(3, int(round(max(w, h) * 0.06)))
                     if dk % 2 == 0:
                         dk += 1
@@ -595,6 +604,10 @@ def mediapipe_face_blur(
                         combined = cv2.dilate(ellipse_mask, kernel, iterations=2)
                     except Exception:
                         combined = ellipse_mask
+                # If segmentation mask covers almost the whole ROI, it's likely wrong; prefer ellipse
+                elif frac > 0.60:
+                    print(f"[mp_blur] Segmentation mask too large for ROI (frac={frac:.2f}), using ellipse fallback")
+                    combined = ellipse_mask
         else:
             combined = ellipse_mask
 
