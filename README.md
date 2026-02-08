@@ -37,7 +37,4 @@ Creates a symmetrical image by mirroring one half of the original image.
 ### ✨ Unsharp Masking (Image Sharpening)
 Enhances image details by emphasizing high-frequency components.
 
-### 😶 Face Blurring
-Detects human faces using Haar Cascade classifiers and applies blurring to protect privacy.
-
 
