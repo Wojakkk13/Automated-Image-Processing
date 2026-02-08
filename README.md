@@ -37,8 +37,5 @@ Creates a symmetrical image by mirroring one half of the original image.
 ### ✨ Unsharp Masking (Image Sharpening)
 Enhances image details by emphasizing high-frequency components.
 
-### 🖼️ Border Framing
-Adds a solid border around images with configurable thickness and color.
-
 
 

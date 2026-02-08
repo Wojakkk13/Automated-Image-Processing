@@ -211,43 +211,6 @@ def thermal_map(img: np.ndarray, colormap: str = "jet", clip_percentiles=(2, 98)
     return heat
 
 
-def add_border(img: np.ndarray, thickness: int = 20, color=(0, 0, 0), relative: bool = False) -> np.ndarray:
-    """Return a copy of `img` framed with a border.
-
-    Args:
-        img: Input image (grayscale or color).
-        thickness: Pixel thickness of border on each side when `relative` is False.
-        color: Border color as BGR tuple for color images or grayscale int for single-channel.
-        relative: If True, treat `thickness` as percentage (0..100) of the smaller image dimension.
-
-    Returns:
-        Image with border added (same dtype).
-    """
-    h, w = img.shape[:2]
-    if relative:
-        # thickness is percentage of min(h,w)
-        pct = max(0.0, min(100.0, float(thickness))) / 100.0
-        t = max(0, int(round(min(h, w) * pct)))
-    else:
-        t = max(0, int(thickness))
-
-    # If image is single-channel, ensure color is scalar
-    if img.ndim == 2:
-        if isinstance(color, (tuple, list)):
-            # convert to single value by taking average
-            c = int(round(float(color[0] + color[1] + color[2]) / 3.0))
-        else:
-            c = int(color)
-        top = bottom = left = right = t
-        framed = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=c)
-    else:
-        # color expected as BGR tuple
-        top = bottom = left = right = t
-        framed = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=tuple(int(x) for x in color))
-
-    return framed
-
-
 def _rect_iou(a, b) -> float:
     """Compute IoU between two rectangles."""
     # a, b = (x,y,w,h)
@@ -368,10 +331,6 @@ def process_all(input_dir: Path, output_dir: Path) -> None:
         except Exception as e:
             print(f"[process] Thermal map failed: {e}")
 
-        try:
-            framed = add_border(img, thickness=20, color=(0, 0, 0), relative=False)
-            save_image(output_dir, img_path, framed, "frame_k20")
-        except Exception as e:
-            print(f"[process] Border framing failed: {e}")
+        # Border framing feature removed
 
     print(f"[process] Completed processing {len(images)} image(s). Outputs in {output_dir}")
