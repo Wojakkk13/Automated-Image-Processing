@@ -445,7 +445,27 @@ def mediapipe_face_blur(
                 k = base_k
             if k % 2 == 0:
                 k += 1
-            out[y0:y1, x0:x1] = cv2.GaussianBlur(roi, (k, k), 0)
+            # Create a soft elliptical mask inside the detected bbox so only the
+            # central face area is blurred (prevents blurring hair/background).
+            blurred = cv2.GaussianBlur(roi, (k, k), 0)
+            rh, rw = roi.shape[:2]
+            mask = np.zeros((rh, rw), dtype=np.uint8)
+            # Ellipse centered in ROI; axes tuned to typical face proportions
+            axes = (max(1, int(rw * 0.45)), max(1, int(rh * 0.55)))
+            center = (int(rw / 2), int(rh / 2))
+            cv2.ellipse(mask, center, axes, 0, 0, 360, 255, -1)
+            # Smooth mask edges for nicer blend
+            try:
+                mask = cv2.GaussianBlur(mask, (15, 15), 0)
+            except Exception:
+                pass
+
+            if roi.ndim == 3:
+                alpha = (mask.astype(np.float32) / 255.0)[:, :, None]
+                out[y0:y1, x0:x1] = (blurred.astype(np.float32) * alpha + roi.astype(np.float32) * (1.0 - alpha)).astype(out.dtype)
+            else:
+                alpha = (mask.astype(np.float32) / 255.0)
+                out[y0:y1, x0:x1] = (blurred.astype(np.float32) * alpha + roi.astype(np.float32) * (1.0 - alpha)).astype(out.dtype)
         return out
 
     mp_seg = mp.solutions.selfie_segmentation
@@ -549,35 +569,47 @@ def mediapipe_face_blur(
         if k % 2 == 0:
             k += 1
         blurred = cv2.GaussianBlur(roi, (k, k), 0)
+        # Build an elliptical face mask inside the bbox (safer default than
+        # using the full box). If MediaPipe segmentation (`seg_mask`) exists,
+        # intersect it with the ellipse to get a tighter face-only mask.
+        rh, rw = roi.shape[:2]
+        ellipse_mask = np.zeros((rh, rw), dtype=np.uint8)
+        axes = (max(1, int(rw * 0.45)), max(1, int(rh * 0.55)))
+        center = (int(rw / 2), int(rh / 2))
+        cv2.ellipse(ellipse_mask, center, axes, 0, 0, 360, 255, -1)
 
         if 'seg_mask' in locals() and seg_mask is not None:
-            roi_mask = (seg_mask[y0:y1, x0:x1] >= float(seg_threshold)).astype(np.uint8)
+            roi_mask = (seg_mask[y0:y1, x0:x1] >= float(seg_threshold)).astype(np.uint8) * 255
             if roi_mask.size == 0:
-                out[y0:y1, x0:x1] = blurred
-                continue
-
-            coverage = float(roi_mask.mean())
-            # Aggressive dilation for low coverage masks
-            if coverage < 0.25:
-                dk = max(3, int(round(max(w, h) * 0.08)))
-                if dk % 2 == 0:
-                    dk += 1
-                kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (dk, dk))
-                try:
-                    roi_mask = cv2.dilate(roi_mask, kernel, iterations=4)
-                except Exception:
-                    pass
-
-            if float(roi_mask.mean()) < 0.02:
-                out[y0:y1, x0:x1] = blurred
+                # fall back to ellipse-only
+                combined = ellipse_mask
             else:
-                if roi.ndim == 3:
-                    roi_mask3 = roi_mask[:, :, None]
-                    out[y0:y1, x0:x1] = np.where(roi_mask3 == 1, blurred, roi)
-                else:
-                    out[y0:y1, x0:x1] = np.where(roi_mask == 1, blurred, roi)
+                combined = cv2.bitwise_and(ellipse_mask, roi_mask.astype(np.uint8))
+                # If combined mask is too small, fall back to ellipse with slight dilation
+                if float(combined.mean()) / 255.0 < 0.02:
+                    dk = max(3, int(round(max(w, h) * 0.06)))
+                    if dk % 2 == 0:
+                        dk += 1
+                    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (dk, dk))
+                    try:
+                        combined = cv2.dilate(ellipse_mask, kernel, iterations=2)
+                    except Exception:
+                        combined = ellipse_mask
         else:
-            out[y0:y1, x0:x1] = blurred
+            combined = ellipse_mask
+
+        # Smooth edges for blending
+        try:
+            combined = cv2.GaussianBlur(combined, (15, 15), 0)
+        except Exception:
+            pass
+
+        if roi.ndim == 3:
+            alpha = (combined.astype(np.float32) / 255.0)[:, :, None]
+            out[y0:y1, x0:x1] = (blurred.astype(np.float32) * alpha + roi.astype(np.float32) * (1.0 - alpha)).astype(out.dtype)
+        else:
+            alpha = (combined.astype(np.float32) / 255.0)
+            out[y0:y1, x0:x1] = (blurred.astype(np.float32) * alpha + roi.astype(np.float32) * (1.0 - alpha)).astype(out.dtype)
 
     return out
 
