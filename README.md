@@ -76,8 +76,8 @@ Detects human faces using Haar Cascade classifiers and applies blurring to prote
 - Place the image or images you want to process inside the `input` folder.  
 - Supported image formats include `.jpg`, `.png`, and `.jpeg`.
 
-### 2. Run the Program
-- Execute the main Python script.  
+### 2. Program Start
+- Once you upload image or images, it will execute the script.
 - The system automatically processes all images found in the `input` folder.
 
 ### 3. Automated Processing
