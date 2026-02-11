@@ -21,6 +21,26 @@ Automated Image Processing is a Python-based image processing application that d
 - Git and GitHub  
 - GitHub Actions  
 
+---
+
+## Installation
+
+### 1. Clone the repository:
+- git clone https://github.com/Wojakkk13/Automated-Image-Processing.git
+### 2. Navigate to project folder:
+- cd Automated-Image-Processing
+
+### 3. Install dependencies:
+- The pipeline will automatically install all the needed dependencies
+
+---
+
+## Run Locally
+```
+python -m project.src.main
+```
+---
+
 ## Project Structure 
 ```text
 Automated-Image-Processing/
@@ -51,6 +71,21 @@ Automated-Image-Processing/
 ```
 ---
 
+## CI/CD Pipeline (GitHub Actions)
+
+The CI pipeline automatically runs when code or images are pushed.
+
+## Steps:
+1. Checks out the repository
+2. Sets up Python 3.11
+3. Installs dependencies
+4. Runs main.py to process images
+5. Executes PyTest validation
+6. Uploads output images as artifacts
+
+
+---
+
 ## Implemented Image Processing Features
 
 ### Thermal Heat Mapping
@@ -77,7 +112,7 @@ Detects human faces using Haar Cascade classifiers and applies blurring to prote
 - Supported image formats include `.jpg`, `.png`, and `.jpeg`.
 
 ### 2. Program Start
-- Once you upload image or images, it will execute the script.
+- Once you upload an image or images, it will execute the script.
 - The system automatically processes all images found in the `input` folder.
 
 ### 3. Automated Processing
@@ -97,6 +132,31 @@ Each input image undergoes the following operations:
 - Every push or pull request triggers the GitHub Actions CI pipeline to ensure code quality and reliability.
 
 ---
+## Automated Testing
+
+### PyTest validates:
+
+- Output folder exists
+- Images are generated
+- Files are not empty
+- Each input image produces outputs
+- Images can be opened
+
+This ensures processing reliability.
+
+---
+
+## How to Trigger Automation
+
+Simply push images into the input/ folder.
+
+### GitHub Actions will:
+- Process images
+- Run tests
+- Generate outputs
+
+---
+
 
 ## Team Members
 - **Kenneth V. Sarmiento - Project Lead / Presenter**
