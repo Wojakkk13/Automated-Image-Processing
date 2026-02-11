@@ -100,7 +100,7 @@ Each input image undergoes the following operations:
 
 ## Team Members
 - **Kenneth V. Sarmiento - Project Lead / Presenter**
-- **Adrian Paul D. Gonzales - DevOps Engineer**
+- **Adrian Paul D. Gonzales - DevOps Engineer / Documenter**
 - **Aaron Kurt G. Singson - Tester / Documenter**
 
 
