@@ -24,6 +24,8 @@ def test_output_folder_exists():
 
 def test_files_not_empty():
     for f in output_dir.glob("*"):
+        if f.name == ".gitkeep":
+            continue
         assert f.stat().st_size > 1000, f"{f.name} is empty or corrupted!"
 
 
